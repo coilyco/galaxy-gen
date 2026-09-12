@@ -6,8 +6,7 @@
 # One line of comment per recipe on purpose: just reads only the LAST comment
 # line above a recipe, so a wrapped description silently truncates to its tail.
 #
-# `ward exec` is retired. `.ward/ward.yaml` survives carrying catalog metadata
-# only, because the catalog hooks upstream in agentic-os pin that exact path.
+# `ward exec` is retired, and so is the `.ward/ward.yaml` that outlived it.
 
 set positional-arguments
 

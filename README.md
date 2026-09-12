@@ -22,7 +22,7 @@ just dev
 just test
 ```
 
-See [.ward/ward.yaml](.ward/ward.yaml) for the full command catalog and
+See the [justfile](justfile) for the full command catalog and
 [AGENTS.md](AGENTS.md) for the conventions.
 
 ## Architecture
@@ -99,6 +99,5 @@ Dev commands are declared in the [`justfile`](justfile). Run them as `just <verb
 - [AGENTS.md](AGENTS.md) - agent-facing operating rules.
 - [docs/FEATURES.md](docs/FEATURES.md) - inventory of what ships today.
 - [justfile](justfile) - dev verbs.
-- [.ward/ward.yaml](.ward/ward.yaml) - catalog metadata only.
 
 Cross-reference convention from agentic-os#59.

@@ -159,7 +159,6 @@ switching tasks, or ending a session. The remote is the only durable artifact.
 - [README.md](README.md) - human-facing intro.
 - [docs/FEATURES.md](docs/FEATURES.md) - inventory of what ships today.
 - [justfile](justfile) - dev verbs (`just <verb>`).
-- [.ward/ward.yaml](.ward/ward.yaml) - catalog metadata only.
 
 Cross-reference convention from agentic-os#59.
 
