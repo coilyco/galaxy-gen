@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: trufflehog-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   scan:
     name: Scan for secrets
