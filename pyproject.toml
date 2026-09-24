@@ -42,4 +42,4 @@ excludes = [
 excludes = ["pkg/**"]
 
 [tool.agentic-os.repo-pointer-skills]
-org = "coilyco-gaming"
+org = "coilyco"
