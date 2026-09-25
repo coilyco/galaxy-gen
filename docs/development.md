@@ -1,41 +1,22 @@
 # Development
 
-## Architecture
-
-### Rust Backend (`src/rust/`)
-
-- `lib.rs` — crate root, re-exports the `galaxy` module
-- `galaxy.rs` - core simulation logic: struct-of-arrays gas grid, gravitational physics, living-galaxy lifecycle, seeding, and tick advancement. Exposed to JS via `wasm-bindgen`
-
-The Galaxy is immutable-style — methods like `seed()`, `tick()` return new Galaxy instances.
-
-### WASM Bridge
-
-- Built with `wasm-pack`, output goes to `pkg/` (gitignored)
-- The JS package.json references `"galaxy_gen_backend": "file:pkg"` as a dev dependency
-
-### JavaScript Frontend (`src/js/`)
-
-- `index.html` - browser shell
-- `index.js` - React entry point
-- `lib/galaxy.ts` - `Frontend` class wrapping the WASM Galaxy and its worker snapshots
-- `lib/application.tsx` - React UI and live simulation controls
-- `lib/dataviz.tsx` - layered canvas visualization
-- `lib/styles.css` - Tailwind theme and custom styles
-
-### Build System
-
-- Rust: `cargo build`, `cargo test`
-- WASM: `wasm-pack build` (previously `wasm-pack init`)
-- JS: webpack 5 with babel (React + TypeScript presets), dev server via `webpack-dev-server`
-- The justfile exposes the supported multi-step workflows.
-
-### CI
-
-- Forgejo (`.forgejo/workflows/ci.yml` on PRs, `build-publish.yml` on `main`): the Rust and JS gates, run inside the dev-base image through `just` verbs. The image supplies rust, node, wasm-pack, and a pinned binaryen, so CI installs no toolchain and the gate matches what `docker build` ships.
-- GitHub Actions (`.github/workflows/action.yml`): browser e2e, which stays there because the in-cluster runner cannot reach the Playwright browser CDN. Its `rust` and `js` jobs now duplicate the Forgejo gate and are queued for removal (galaxy-gen#74).
-
-## Commands
+- **Rust** (`src/rust/`). `lib.rs` re-exports `galaxy`. `galaxy.rs` holds the
+  struct-of-arrays gas grid, physics, lifecycle, seeding, and tick, exposed to
+  JS through `wasm-bindgen`. Methods like `seed()` and `tick()` return new
+  Galaxy instances.
+- **WASM bridge.** `wasm-pack` builds into `pkg/` (gitignored), which
+  package.json references as `"galaxy_gen_backend": "file:pkg"`.
+- **JS** (`src/js/`). `index.html` shell, `index.js` React entry,
+  `lib/galaxy.ts` wraps the WASM Galaxy and its worker snapshots,
+  `lib/application.tsx` is the UI, `lib/dataviz.tsx` the layered canvas, and
+  `lib/styles.css` the Tailwind theme.
+- **Build.** `cargo build` and `cargo test`, `wasm-pack build`, webpack 5 with
+  babel and `webpack-dev-server`. The justfile carries the multi-step flows.
+- **CI.** Forgejo runs the Rust and JS gates inside the dev-base image through
+  `just` verbs (`ci.yml` on PRs, `build-publish.yml` on `main`). Those jobs
+  carry a 10m timeout because wasm-pack's wasm-bindgen download can stall until
+  the 30m runner budget and report `cancelled`. Healthy runs take under 5m, and
+  the download is galaxy-gen#89. GitHub Actions keeps browser e2e (galaxy-gen#74).
 
 ```bash
 just install
@@ -44,18 +25,16 @@ just test
 just build-js-prod
 ```
 
-To refresh the README animation, start the dev server and run `just capture-readme`. Set `GALAXY_CAPTURE_URL` when the server is not on port 8081. The command writes `docs/project-galaxy-gen.next.gif` and refuses to overwrite either an earlier candidate or the tracked GIF. After inspection, `just promote-readme` replaces the tracked asset with that candidate.
+- **README animation.** Start the dev server, run `just capture-readme` (set
+  `GALAXY_CAPTURE_URL` off port 8081), inspect the candidate, then
+  `just promote-readme`. Capture never overwrites an earlier candidate or the
+  tracked GIF.
+- **Conventions.** `wasm_bindgen` only at the public boundary. State is parallel
+  flat arrays indexed `row * size + col`. Physics accumulates cartesian
+  acceleration and keeps fractional gas positions. Tests live in `mod tests_*`
+  at the bottom of `galaxy.rs`. Frontend state is React `useState` only.
+- **Dependencies.** Rust: `wasm-bindgen`, `rand`, `console_error_panic_hook`.
+  JS: React, TypeScript, webpack, Tailwind, Playwright.
 
-## Key Conventions
-
-- Rust code uses `wasm_bindgen` for the public API boundary; private methods are plain `impl` blocks
-- Galaxy state uses parallel flat arrays indexed by `row * size + col`
-- Physics accumulates cartesian acceleration and preserves fractional gas positions between grid transfers
-- Tests are organized in `mod tests_*` blocks at the bottom of `galaxy.rs`
-- Frontend state is managed with React `useState` hooks (no state library)
-- ESLint, Prettier, TypeScript, Rust formatting, Clippy, and browser tests run through the Ward validation surface
-
-## Dependencies
-
-- Rust: `wasm-bindgen`, `rand`, `console_error_panic_hook`
-- JS: React, TypeScript, webpack, Tailwind, Playwright
+Verbatim originals: [development](../.agents/skills/coding-galaxy-gen-internals/references/development.md),
+[ci-timeouts](../.agents/skills/coding-galaxy-gen-internals/references/ci-timeouts.md).

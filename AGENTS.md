@@ -26,7 +26,7 @@ Load-bearing files you will touch most often:
 - `src/js/lib/styles.css` - custom styles (dark theme, galaxy-gen palette).
 - `e2e/galaxy.spec.ts` - Playwright end-to-end tests.
 - `e2e/visual-capture.spec.ts` - before-and-after visual harness; see
-  [docs/visual-capture.md](docs/visual-capture.md).
+  [docs/recording.md](docs/recording.md).
 - `playwright.config.ts` - Playwright config; auto-boots webpack-dev-server.
 - `webpack.config.js` - dev server (HMR + live-reload on `pkg/` changes).
 
@@ -58,7 +58,7 @@ Raw commands: `cargo test`, `cargo clippy -- -D warnings`, `cargo fmt`, `wasm-pa
 ## Scope-shape signals
 
 README lists nine inspirational sibling projects. Consult it when evaluating
-scope adds. `docs/journal/perf-rewrite.md` is load-bearing for the inner loop.
+scope adds. `docs/performance.md` is load-bearing for the inner loop.
 
 ## Key References
 
@@ -87,24 +87,15 @@ finding e2e a home on the shipping toolchain, are tracked in galaxy-gen#74.
 
 ## Workflow
 
-The resolved workflow for this repo is `direct-to-main`. Commit and push
-finished work straight to `main` on Forgejo, then close the issue. Do not park
-a finished change on a task branch waiting for a human to merge it, and do not
-open a pull request for the default case.
-
-Pushing to `main` publishes the image, so the gate is the test suite rather
-than a review. Land only with `just test-rust`, `just check-js`, and
+The lane is `pull-request-and-merge`, stated in the Git workflow block below.
+A merge to `main` publishes the image, so the gate is the test suite rather
+than a review. Merge only with `just test-rust`, `just check-js`, and
 `just test-e2e` green, and never with `--no-verify`.
 
 It does not roll the public site. The deploy repo pins an exact source SHA and
 rolls only when its own `services/galaxy-gen/**` changes. Auto-rolling from an
 upstream push here still needs cross-repo dispatch (deploy#11), so a new image
 sits unused until that pin moves.
-
-Use a branch only when the work is genuinely unfinished, when a human has to
-choose between paths first, or when Kai asks for one. A branch is also the
-right home for a checkpoint an agent cannot carry to completion - push it
-rather than leaving the only copy local.
 
 ## Deploy
 
@@ -167,12 +158,11 @@ Cross-reference convention from agentic-os#59.
 
 **This repo runs the `pull-request-and-merge` lane**, declared as `ward.workflow` in this file's frontmatter. The agent commits to a task branch, pushes it, opens a Forgejo pull request, and **merges that pull request itself** once it is green. The author of the code is the one who merges it. Opening the pull request is a step, never the stopping point.
 
-The fleet runs two lanes, and both authorize the same core actions:
+The fleet runs one lane, and it authorizes the agent end to end. Pushing straight to `main` is over: `merge-remote-main` is retired, so no repo can declare its way back to one.
 
-* `merge-remote-main` - the agent commits, pushes to `main`, and closes the issue. No branch and no pull request.
 * `pull-request-and-merge` - the agent commits to a task branch, pushes it, opens a pull request, and merges that pull request itself once it is green.
 
-**Every lane slug names what the AGENT does, never what someone else does.** `pull-request-and-merge` carries the merge because the agent that authored the code merges its own pull request. `pull-request` drops `-and-merge` because the author stops at the pull request and the director merge lane takes over. Reading `pull-request-and-merge` as "someone else merges it later" inverts the two lanes and leaves finished work sitting unmerged.
+**Every lane slug names what the AGENT does, never what someone else does.** `pull-request-and-merge` carries the merge because the agent that authored the code merges its own pull request. `pull-request` drops `-and-merge` because the author stops at the pull request and the director merge lane takes over. Reading `pull-request-and-merge` as "someone else merges it later" inverts the two and leaves finished work sitting unmerged.
 
 **These actions are pre-authorized on every lane, and the agent MUST take them without asking first.** Committing, creating a branch, pushing a branch, pushing the lane's own destination, and opening a pull request are ordinary reversible work, not the destructive wall that earns a question. Stopping to ask is how a turn ends with the work stranded in a dirty worktree.
 

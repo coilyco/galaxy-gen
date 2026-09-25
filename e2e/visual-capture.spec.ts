@@ -1,7 +1,7 @@
 import { test, expect, Page } from "@playwright/test";
 
 // Before-and-after visual harness, skipped unless GALAXY_CAPTURE is set.
-// Run it and read the results per docs/visual-capture.md.
+// Run it and read the results per docs/recording.md.
 
 const FIXED_SEED = 424242;
 const SIZE = 500;
@@ -45,7 +45,7 @@ test.describe("visual capture", () => {
     );
 
     // Paint the advanced state explicitly; waiting would photograph a fresh
-    // galaxy. See docs/visual-capture.md.
+    // galaxy. See docs/recording.md.
     await page.evaluate(() => {
       const g: any = (window as any).__galaxyGen;
       g.dataviz.updateData(g.frontend, g.frontend.tickCount());

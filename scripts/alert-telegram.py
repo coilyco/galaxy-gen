@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 """Send the CI or CD failure alert to Telegram.
 
-Stdlib-only so the runner needs no package installation. Every workflow calls
-this instead of carrying its own copy of the body. Kept byte-compatible with
-coilyco-bridge/deploy's copy so the two can converge on one source later.
-
-A workflow passes only what the runner cannot supply: BOT_TOKEN and CHAT_ID.
-Everything else falls back to the runner's own GITHUB_* variables, and any
-explicit value still wins. Retiring the two secrets needs the Ward
-/api/create_alert path, which is gated on deploy#339.
+Stdlib-only, so the runner installs nothing. Every workflow calls this rather
+than carrying its own body. Its code matches deploy's copy for a later
+merge. Workflows pass only BOT_TOKEN and CHAT_ID. The rest falls back to the
+runner's GITHUB_* variables, and an explicit value wins. Retiring the secrets
+needs Ward's /api/create_alert path, gated on deploy#339.
 """
 
 from __future__ import annotations

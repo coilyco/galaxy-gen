@@ -183,7 +183,7 @@ impl EventQueue {
     }
 
     /// Flat u32 serialization for the worker state round-trip.
-    /// Layout and what it drops: docs/tick-worker.md.
+    /// Layout and what it drops: docs/galaxy-rust.md.
     pub fn to_flat(&self) -> Vec<u32> {
         let mut out = Vec::with_capacity(6 + self.pending.len() * 12);
         out.push(self.next_id as u32);

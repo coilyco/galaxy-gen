@@ -1,55 +1,39 @@
-# Recording
+# Recording and visual capture
 
-Capture a run as an animated GIF or an MP4 from the browser. No checkout, no
-ffmpeg, no dev server - the whole path runs client-side on the public site.
+Capture a run as an animated GIF or an MP4 from the browser, with no checkout,
+ffmpeg, or dev server. The whole path runs client-side on the public site.
 
-## Using it
+- **Using it.** Generate a galaxy, pick **gif** or **mp4**, press **record**,
+  play or step the run, then press **stop** to encode and download. The file is
+  named for the permalink that reproduces it, so
+  `galaxy-<seed>-<scenario>-<size>.mp4` leads back to the exact galaxy.
+  Recording captures the canvas only.
+- **Format.** MP4 has true color, hardware encoding, and files about an order of
+  magnitude smaller. GIF stays the default because it pastes anywhere and has
+  no capability floor. The **mp4** pill renders disabled, with the reason, where
+  WebCodecs or H.264 is missing.
+- **Funnel.** `src/js/lib/recorder.ts` subscribes to `dataviz.setFrameListener`,
+  which fires at the end of every render path, so each captured frame is a
+  completed draw paired with its tick.
+- **Budget and backpressure.** GIF takes one reduced `getImageData` inline and
+  encodes on idle callbacks. Past 8 pending frames it encodes inline rather
+  than drop a frame. MP4 reads the scratch canvas directly, and awaiting
+  `CanvasSource.add` is its backpressure.
+- **Constraints.** H.264 rejects odd dimensions, so both axes round down to
+  even. A mid-capture resize keeps the first size.
+- **Defaults.** 10 ticks per frame (reproducible by tick, not wall clock), 240
+  frames max, width 640, 12 fps, GIF per-frame palettes.
+- **Tests.** `e2e/record.spec.ts` parses the downloaded bytes: GIF signature,
+  dimensions, frame count, and trailer, and MP4 `ftyp` plus `moov`.
+- **Visual capture harness.** `e2e/visual-capture.spec.ts` shoots the same
+  galaxy at the same tick for before-and-after comparison, and skips unless
+  `GALAXY_CAPTURE` is set. It advances on the main thread and paints the
+  advanced state explicitly, since waiting photographs a tick-0 galaxy.
 
-1. Generate a galaxy.
-2. Pick a format with the **gif** / **mp4** pills.
-3. Press **record**. The button switches to `stop (n/240)` and counts frames as
-   they are banked. The format pills lock for the duration.
-4. Play the run, step it, or leave it running. The recorder captures whatever
-   happens next.
-5. Press **stop**. The file encodes and downloads.
+Related: [performance.md](performance.md) for where the frame budget went.
 
-The file is named for the permalink that reproduces the run, so
-`galaxy-3885981479949904436-irregular-spiral-500.mp4` came from
-`?seed=3885981479949904436&scenario=irregular-spiral&size=500`. Someone handed
-the file can still reach the exact galaxy that produced it.
+Detail, verbatim, with the ImageMagick comparison commands:
 
-Recording captures the canvas only, so no control panel appears in the output.
-Pair it with the chrome toggle (or load `?ui=0`) if you also want the live page
-clean while recording. For a maintainer asset, `just capture-readme`
-remains the headless path and is unaffected by any of this.
-
-## Choosing a format
-
-MP4 is the better output on every axis that matters - true color instead of 256
-palette entries, hardware encoding, and roughly an order of magnitude smaller
-for the same run. GIF stays the default because it pastes into more places
-without a player, and because it is the format with no capability floor.
-
-MP4 needs WebCodecs and an H.264 encoder. `isMp4Available()` probes both once
-per page via Mediabunny's `canEncodeVideo("avc")`, and the **mp4** pill renders
-disabled where the answer is no, with the reason in its tooltip. Disabled
-rather than absent: a viewer should be able to see that the option exists and
-why it is unavailable, rather than wonder whether the site is broken.
-
-## Tests
-
-`e2e/record.spec.ts` parses the downloaded bytes rather than trusting them. For
-GIF it checks the `GIF89a` signature, reads the logical screen dimensions,
-walks the block structure to count image descriptors, and asserts the `0x3b`
-trailer is present so a truncated stream cannot pass. For MP4 it walks the
-top-level ISO-BMFF box tree and requires both `ftyp` and `moov`, since `moov`
-is what proves `finalize()` ran - a capture killed mid-stream still has samples
-but no index, and a plain size check would let it through. It covers the
-disabled state before generate, a stepped capture in each format, the pill
-interlock during recording, and a live run.
-
-## See also
-
-- [recording-internals.md](recording-internals.md) - funnel, backpressure, tuning.
-- [FEATURES.md](FEATURES.md) - inventory of what ships.
-- [perf-rewrite.md](journal/perf-rewrite.md) - where the frame budget went.
+- [recording](../.agents/skills/coding-galaxy-gen-internals/references/recording.md)
+- [recording-internals](../.agents/skills/coding-galaxy-gen-internals/references/recording-internals.md)
+- [visual-capture](../.agents/skills/coding-galaxy-gen-internals/references/visual-capture.md)

@@ -21,17 +21,17 @@ const FRAME_RATE_SCALE: Record<galaxy.Scenario, number> = {
 const FRAME_RATE_PRESENTATION_MULTIPLIER = 16;
 
 // Stars keep the wide fade: their two-tier halo is real physics out to 3x
-// disk_r. Why stars and gas differ: docs/rendering-fades.md.
+// disk_r. Why stars and gas differ: docs/rendering.md.
 const FADE_START = 0.88;
 const FADE_END = 1.32;
 
 // Gas reaches zero inside the confinement wall, so the density ridge that
-// parks there cannot paint an edge. See docs/rendering-fades.md.
+// parks there cannot paint an edge. See docs/rendering.md.
 const GAS_FADE_START = 0.58;
 const GAS_FADE_END = 0.94;
 
 // Screen-space vignette: where it begins as a fraction of the corner
-// distance, and its corner opacity. See docs/rendering-fades.md.
+// distance, and its corner opacity. See docs/rendering.md.
 const VIGNETTE_START = 0.55;
 const VIGNETTE_STRENGTH = 0.55;
 
@@ -44,7 +44,7 @@ const VIEW_SPAN = 1.42;
 const LENS_THETA_E_FRAC = 0.035;
 
 // One ring per 2.5 device px keeps radial stepping under what the eye
-// resolves; the bounds cap both ends. See docs/rendering-fades.md.
+// resolves; the bounds cap both ends. See docs/rendering.md.
 const LENS_RING_PX = 2.5;
 const LENS_MIN_RINGS = 16;
 const LENS_MAX_RINGS = 72;
@@ -53,13 +53,13 @@ const LENS_MAX_RINGS = 72;
 const LENS_MAX_MAGNIFICATION = 8;
 
 // Soft nebular sprites, one per color bucket, pre-rendered once - far
-// cheaper than per-cell gradients. See docs/rendering-gas.md.
+// cheaper than per-cell gradients. See docs/rendering.md.
 const GAS_SPRITE_PX = 32;
 let gasSprites: HTMLCanvasElement[][] = [];
 let dustSprite: HTMLCanvasElement | null = null;
 
 // Hue follows the radiation field; ramps stay flat and mid-dark because
-// brightness comes from accumulation. See docs/rendering-gas.md.
+// brightness comes from accumulation. See docs/rendering.md.
 const GAS_TIERS: [number, number, number][][] = [
   // Cold: blue-violet.
   [
@@ -105,7 +105,7 @@ const GAS_WARM_RAD = 7;
 const GAS_HOT_RAD = 26;
 
 // Smallest gas sprite in CSS px, and the reason block aggregation
-// exists. See docs/rendering-gas.md.
+// exists. See docs/rendering.md.
 const GAS_MIN_FOOTPRINT_PX = 7;
 
 // Sprites fainter than this never reach a visible level through the
@@ -166,7 +166,7 @@ function buildGasSprites() {
   }
 
   // Multiply compositing: dark absorbing core out to white, which is
-  // multiply identity and leaves no seam. See docs/rendering-gas.md.
+  // multiply identity and leaves no seam. See docs/rendering.md.
   const d = document.createElement("canvas");
   d.width = GAS_SPRITE_PX;
   d.height = GAS_SPRITE_PX;
@@ -189,11 +189,11 @@ interface Camera {
 }
 
 // Target sprite spacing. Blocks decouple exposure from grid size - 1 at
-// size 250, 2 at 500. Why that matters: docs/rendering-gas.md.
+// size 250, 2 at 500. Why that matters: docs/rendering.md.
 const GAS_TARGET_SPRITE_SPACING_PX = 2.5;
 
 /// Per-frame gas block scratch, reallocated only when the block grid
-/// changes. Shared by all three gas passes. See docs/rendering-gas.md.
+/// changes. Shared by all three gas passes. See docs/rendering.md.
 interface GasBlocks {
   /// Block edge in cells.
   block: number;
@@ -647,7 +647,7 @@ export function setFrameListener(fn: FrameListener | null) {
 }
 
 /// Fold cells into blocks and precompute what all three gas passes need.
-/// One cell walk plus two block walks. See docs/rendering-gas.md.
+/// One cell walk plus two block walks. See docs/rendering.md.
 function buildGasBlocks(s: State, mass: Uint16Array): GasBlocks {
   const g = ensureGasBlocks(s);
   const { block, bw } = g;
@@ -782,7 +782,7 @@ function buildGasBlocks(s: State, mass: Uint16Array): GasBlocks {
     teal[b] = shock > 0 ? shock * shock * (3 - 2 * shock) * (0.3 + 0.7 * sumMetal[b]) : 0;
 
     // Coherent dust only - dense, cold, thick neighborhood. The neighbor
-    // count prevents dark specks. See docs/rendering-gas.md.
+    // count prevents dark specks. See docs/rendering.md.
     if (mean >= 78 && sumMetal[b] > 0 && radCold) {
       const bx = b % bw;
       const by = (b / bw) | 0;
@@ -851,7 +851,7 @@ function drawFrame(s: State, mass: Uint16Array) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   ctx.scale(dpr, dpr);
   // Opaque base, baked into the backdrop and laid down pre-camera so the
-  // sky stays screen-fixed. Why it must be opaque: docs/rendering-gas.md.
+  // sky stays screen-fixed. Why it must be opaque: docs/rendering.md.
   const backdrop = timed("background", () => ensureBackground(s));
   if (backdrop) {
     ctx.drawImage(backdrop, 0, 0, s.cw, s.ch);
@@ -897,7 +897,7 @@ function drawFrame(s: State, mass: Uint16Array) {
   const buckets = GAS_TIERS[0].length;
 
   // Two passes split by a stable per-block hash so clusters sit inside
-  // their clouds. Pure compositing. See docs/rendering-gas.md.
+  // their clouds. Pure compositing. See docs/rendering.md.
   const renderGas = (foreground: boolean) => {
     // Screen blending: overlapping clouds glow into each other but
     // saturate smoothly instead of clipping to white.
@@ -945,7 +945,7 @@ function drawFrame(s: State, mass: Uint16Array) {
   };
 
   // Dust over the star field: broad faint multiply blobs, only to dim
-  // stars shining through thick clouds. See docs/rendering-gas.md.
+  // stars shining through thick clouds. See docs/rendering.md.
   const dustFootprintBase = Math.max(10, scale * gas.block * 6);
   const renderDust = () => {
     ctx.globalCompositeOperation = "multiply";
@@ -966,7 +966,7 @@ function drawFrame(s: State, mass: Uint16Array) {
   };
 
   // Newborns start beneath the cloud field and age cross-fades them out,
-  // so a birth is not a pellet spray. See docs/rendering-stars.md.
+  // so a birth is not a pellet spray. See docs/rendering.md.
   timed("starsEmbedded", () => drawStars(s, toCx, toCy, "embedded"));
   timed("gasBack", () => renderGas(false));
   timed("associations", () => drawAssociations(s, toCx, toCy));
@@ -986,7 +986,7 @@ function drawFrame(s: State, mass: Uint16Array) {
 }
 
 /// Screen-space falloff to sky black at the frame edge, run after the
-/// lens. Distinct from the world-space fades: docs/rendering-fades.md.
+/// lens. Distinct from the world-space fades: docs/rendering.md.
 function applyEdgeVignette(s: State) {
   const { ctx, canvas } = s;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1009,7 +1009,7 @@ function applyEdgeVignette(s: State) {
 }
 
 // Active nucleus, reading the same pulse and axis as the physical
-// feedback. See docs/rendering-stars.md and docs/quasar-feedback.md.
+// feedback. See docs/rendering.md and docs/black-hole.md.
 function drawQuasar(s: State, toCx: (x: number) => number, toCy: (y: number) => number) {
   const activity = s.lastQuasarActivity;
   if (activity <= 0) {
@@ -1140,7 +1140,7 @@ function drawQuasar(s: State, toCx: (x: number) => number, toCy: (y: number) => 
 }
 
 // Shimmer: an annulus-clipped self-blit scaled outward about the blast.
-// No pixel read-back. See docs/rendering-stars.md.
+// No pixel read-back. See docs/rendering.md.
 const MAX_SHIMMER_WAVES = 8;
 
 function applyShockShimmer(s: State) {
@@ -1201,7 +1201,7 @@ function applyShockShimmer(s: State) {
 function applyBlackHoleLens(s: State) {
   const { ctx, canvas, size, scale, camera, dpr } = s;
   // Hole is at the world center. Lens depth follows its live mass. See
-  // docs/rendering-fades.md.
+  // docs/rendering.md.
   const cssX = camera.zoom * (s.cw / 2) + camera.tx;
   const cssY = camera.zoom * (s.ch / 2) + camera.ty;
   const thetaCss = LENS_THETA_E_FRAC * size * scale * camera.zoom * s.lastLensScale;
@@ -1228,7 +1228,7 @@ function applyBlackHoleLens(s: State) {
   lensCtx.drawImage(canvas, x0, y0, w, h, 0, 0, w, h);
 
   // Purely radial deflection, so the warp is a stack of clipped self-blit
-  // annuli and stays on the GPU. See docs/rendering-fades.md.
+  // annuli and stays on the GPU. See docs/rendering.md.
   const shadowR = te * 0.3;
   const taperStart = R * 0.75;
   const rings = Math.max(LENS_MIN_RINGS, Math.min(LENS_MAX_RINGS, Math.round(R / LENS_RING_PX)));
@@ -1236,7 +1236,7 @@ function applyBlackHoleLens(s: State) {
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   // Clear, then re-lay the snapshot: without either step the lens reads
-  // as a dark box or a double-blended square. docs/rendering-fades.md.
+  // as a dark box or a double-blended square. docs/rendering.md.
   ctx.clearRect(x0, y0, w, h);
   ctx.drawImage(lensCanvas, 0, 0, w, h, x0, y0, w, h);
   for (let i = 0; i < rings; i++) {
@@ -1250,7 +1250,7 @@ function applyBlackHoleLens(s: State) {
       f = f + (1 - f) * t * t * (3 - 2 * t);
     }
     // Destination r shows source r*f, so scale by 1/f. Negative f is the
-    // inverted inner image. See docs/rendering-fades.md.
+    // inverted inner image. See docs/rendering.md.
     let k = f === 0 ? LENS_MAX_MAGNIFICATION : 1 / f;
     if (k > LENS_MAX_MAGNIFICATION) k = LENS_MAX_MAGNIFICATION;
     else if (k < -LENS_MAX_MAGNIFICATION) k = -LENS_MAX_MAGNIFICATION;
@@ -1295,7 +1295,7 @@ function applyBlackHoleLens(s: State) {
 }
 
 // Sedov-Taylor-flavored front, radius as E^0.2 t^0.4 with progenitor
-// mass for energy. See docs/rendering-stars.md.
+// mass for energy. See docs/rendering.md.
 function blastRadius(mass: number, age: number): number {
   return 1.0 + 1.4 * Math.pow(Math.max(mass, 30) / 30, 0.2) * Math.pow(age + 1, 0.4);
 }
@@ -1318,7 +1318,7 @@ function drawTransients(s: State, toCx: (x: number) => number, toCy: (y: number)
     const mag = t[i + 4];
     if (kind === 2 || kind === 5) {
       // A shell with a bright leading edge and fading wake, understated
-      // because an epoch fires many. See docs/rendering-stars.md.
+      // because an epoch fires many. See docs/rendering.md.
       const typeIa = kind === 5;
       const life = 1 - age / BLAST_LIFE;
       if (life <= 0) continue;
@@ -1409,7 +1409,7 @@ function drawTransients(s: State, toCx: (x: number) => number, toCy: (y: number)
 }
 
 // Newborn cyan to deep amber, with no white stop on purpose. Render-only.
-// See docs/rendering-stars.md.
+// See docs/rendering.md.
 const AGE_STOPS: [number, [number, number, number]][] = [
   [0.0, [120, 226, 255]],
   [0.18, [96, 178, 255]],
@@ -1420,7 +1420,7 @@ const AGE_STOPS: [number, [number, number, number]][] = [
 ];
 
 // Color quantized into buckets with CSS strings built once; opacity moves
-// to globalAlpha. Why: docs/rendering-stars.md.
+// to globalAlpha. Why: docs/rendering.md.
 const STAR_AGE_BUCKETS = 24;
 const STAR_BUCKET_RED_GIANT = STAR_AGE_BUCKETS;
 const STAR_BUCKET_WHITE_DWARF = STAR_AGE_BUCKETS + 1;
@@ -1442,7 +1442,7 @@ function buildStarColors() {
 }
 
 // Discs batched into (color, alpha) buckets, one path per bucket; alpha
-// quantized on a sqrt curve. See docs/rendering-stars.md.
+// quantized on a sqrt curve. See docs/rendering.md.
 const STAR_COLOR_COUNT = STAR_BUCKET_NEUTRON + 1;
 const STAR_ALPHA_LEVELS = 24;
 const STAR_BATCH_BUCKETS = STAR_COLOR_COUNT * STAR_ALPHA_LEVELS;
@@ -1563,7 +1563,7 @@ function birthReveal(stars: Float32Array, i: number): number {
 }
 
 // One shared pool of unresolved light per bound association, derived from
-// member positions so it dissolves with them. docs/rendering-stars.md.
+// member positions so it dissolves with them. docs/rendering.md.
 function drawAssociations(s: State, toCx: (x: number) => number, toCy: (y: number) => number) {
   const stars = s.lastStars;
   if (!stars || stars.length === 0) return;
@@ -1627,7 +1627,7 @@ function drawAssociations(s: State, toCx: (x: number) => number, toCy: (y: numbe
 }
 
 // Three brightness tiers, like a long-exposure field: bare points, tight
-// glows, and spikes for giants. See docs/rendering-stars.md.
+// glows, and spikes for giants. See docs/rendering.md.
 function drawStars(
   s: State,
   toCx: (x: number) => number,
@@ -1641,7 +1641,7 @@ function drawStars(
   const softR = size / 2 - 1;
   const center = size / 2;
   // Additive: overlapping stars brighten instead of occluding, so a dense
-  // swarm reads as a glow. See docs/rendering-stars.md.
+  // swarm reads as a glow. See docs/rendering.md.
   ctx.globalCompositeOperation = "screen";
   for (let i = 0; i < stars.length; i += galaxy.STAR_RENDER_FLOATS) {
     const reveal = birthReveal(stars, i);
@@ -1707,7 +1707,7 @@ function drawStars(
 }
 
 /// Saturation age, calibrated against the measured population rather than the
-/// tick count. Why that distinction matters: docs/rendering-stars.md.
+/// tick count. Why that distinction matters: docs/rendering.md.
 const AGE_RAMP_FULL = 550;
 /// Mildly sub-linear: lifts the young tail clear of the floor.
 const AGE_RAMP_CURVE = 0.8;
@@ -1719,7 +1719,7 @@ function ageBucket(age: number): number {
 }
 
 /// The ramp as the frame resolves it. Why a pixel check cannot stand in for
-/// this: docs/rendering-stars.md.
+/// this: docs/rendering.md.
 export function starAgeBucket(age: number): number {
   return ageBucket(age);
 }

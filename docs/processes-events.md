@@ -1,45 +1,39 @@
-# Processes, events, and the causal graph
+# Processes, events, and the causal loop
 
-The simulation core follows one principle: the process registry defines causality, struct-of-arrays store state, processes perform bulk transformations, events represent discrete changes, and rendering derives appearance from the resulting world.
+The process registry defines causality, struct-of-arrays store state,
+processes perform bulk transformations, events represent discrete changes, and
+rendering derives appearance from the resulting world.
 
-## Process registry (`src/rust/process.rs`)
+- **Registry** (`src/rust/process.rs`). Static descriptors with reads, writes,
+  `requires_fresh`, cadence, and phase offset. Registry order IS the causal
+  chain, so changing it is a physics change. Unit tests check fresh reads have
+  an earlier writer and pin the order to a golden list.
+- **Order.** gravity, spiral and ring density waves, gas_pressure,
+  quasar_feedback, gravity_field, integrate_gas, integrate_stars,
+  radiation_field, collapse_watch, stellar_halo, stellar_aging, bh_accretion,
+  bh_evaporation, gas_dissipation, gas_fountain. Motion every tick, fields
+  every 4, lifecycle every 8-16.
+- **Events** (`src/rust/events.rs`). An event emitted on tick N runs on N+1, in
+  stable (tick, seq) order, with a causal parent id. Renderer transients read
+  executed events and are never authoritative state.
+- **RNG.** One u64 master seed. Streams derive per (process id, tick) through
+  splitmix64, so adding a process never shifts another's draws.
+- **Determinism.** Same seed, tick count, and dt sequence give identical state.
+  Golden-hash tests pin every scenario's mass field after 100 ticks.
+- **The loop.** Gas clumps, density waves gather it, dense cool cells collapse
+  into stellar associations, radiation resists the next collapse and lifts hot
+  gas to the halo, the fountain cools it back, stars age, and supernovae return
+  gas and shock nearby cells. The black-hole branch is in
+  [black-hole.md](black-hole.md).
+- **Lifecycle chains.** Associations bind and release by persisted
+  `cluster_id`. Compact binaries merge into a `GammaRayBurst`. Intermediate
+  pairs end as a Type Ia. Stars that stay beyond 1.18 disk radii phase-mix into
+  `stellar_halo_mass`.
+- **Ledgers.** Baryon mass across every carrier stays constant to sub-1.0, and
+  a second ledger tracks heavy elements plus explicit yields.
 
-A static list of descriptors - name, declared reads, declared writes, `requires_fresh` (reads that must be produced earlier in the same tick), cadence, phase offset, and a plain fn pointer into `Galaxy`. `Galaxy::tick` runs due descriptors in declared order, then executes the tick's due events. The registry order IS the causal chain: changing it is a physics change, not a refactor.
+Detail, verbatim:
 
-Validation is a set of unit tests, not a runtime borrow engine:
-
-- every `requires_fresh` read has an earlier same-tick writer with a matching cadence
-- every process declares reads or writes
-- the ordering matches a golden list that must be extended deliberately
-
-Cadence lets motion run every tick while fields and lifecycle rules run less often: a process runs when `tick_count % cadence == phase_offset % cadence`.
-
-## Event queue (`src/rust/events.rs`)
-
-Deterministic queued-event model:
-
-- an event emitted during tick N is scheduled for tick N+1 - same-tick recursive execution is structurally impossible
-- execution order is stable (tick, seq), where seq is emission order within the emitting tick; ids are globally monotonic
-- each event carries kind, source, target, two scalar payloads, and a causal parent id, so a `StarBirth` can carry mass plus composition while a supernova-induced birth remains traceable through `ShockWave` to the `Supernova` that caused it
-- a bounded ring of executed events feeds instrumentation counters and renderer transients - a supernova flash is the renderer's reading of a Supernova event, never authoritative state
-- `QuasarIgnition` records the discrete start and its accretion rate, while serialized quasar duration, cooldown, and axis make the derived age and pulse phase authoritative for physics and rendering
-
-## RNG service
-
-One u64 master seed (the `?seed=` URL value). Streams are derived statelessly per (process id, tick) via splitmix64 mixing, so streams are independent per process, adding a process never shifts another's draw sequence, and there is no RNG state to serialize across the worker boundary. `seed_with_mode` draws a random master seed and delegates to `seed_with_mode_seeded`, so every run is structurally reproducible.
-
-## Determinism contract
-
-Same seed + same tick count + same dt sequence -> identical state. Guarded by golden-hash tests in `mod tests_golden` (galaxy.rs) that pin the mass field after 100 ticks for every scenario. A deliberate physics change recaptures the goldens and says so in the commit.
-
-## See also
-
-- [causal-loop.md](causal-loop.md) - registry order and the end-to-end loop
-- [lifecycle-chains.md](lifecycle-chains.md) - association, binary, and retirement chains, and the ledger
-- [galaxy-rust.md](galaxy-rust.md) - constants, buffers, hot path
-- [spiral-density-waves.md](spiral-density-waves.md) - persistent arm physics and morphology checks
-- [ring-density-waves.md](ring-density-waves.md) - annular gas physics and morphology checks
-- [elliptical-relaxation.md](elliptical-relaxation.md) - spheroid assembly and morphology checks
-- [quasar-feedback.md](quasar-feedback.md) - active-nucleus ignition, bipolar feedback, and reference-seed acceptance
-- [tick-worker.md](tick-worker.md) - worker message protocol
-- [FEATURES.md](FEATURES.md) - capability inventory
+- [processes-events](../.agents/skills/coding-galaxy-gen-internals/references/processes-events.md)
+- [causal-loop](../.agents/skills/coding-galaxy-gen-internals/references/causal-loop.md)
+- [lifecycle-chains](../.agents/skills/coding-galaxy-gen-internals/references/lifecycle-chains.md)

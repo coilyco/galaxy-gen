@@ -1,60 +1,40 @@
 # Canvas renderer
 
-`src/js/lib/dataviz.tsx`. Canvas, not SVG: one `<canvas>` per frame, DPR-aware
-and clamped at 2x.
+`src/js/lib/dataviz.tsx`. One `<canvas>` per frame, DPR-aware and clamped at
+2x. Render-only exaggeration is fine, since nothing flows back into the sim.
 
-## Frame composition
+- **Composition.** A seeded opaque backdrop ([starfield.md](starfield.md)), then
+  the world in a co-rotating stellar frame. Pan and zoom sit behind `?debug=1`.
+- **Gas sprites.** Soft pre-rendered sprites in four tiers (cold blue-violet,
+  warm magenta, H-alpha pink, shock-swept [OIII] teal). Ramps stay flat and
+  mid-dark because brightness comes from accumulation.
+- **Screen-space blocks.** Cells aggregate into blocks sized to the minimum
+  sprite footprint, so the gas looks the same at any grid size. Grid resolution
+  used to act as an exposure control. Steady-state frames allocate nothing.
+- **Two gas passes** split by a stable block hash, so clusters sit inside their
+  clouds. Dust multiplies from a dark core to white, and only coherent dense
+  cold neighbourhoods stamp it. The opaque base stops multiply from painting
+  grey squares.
+- **Stars.** Main-sequence color keys on `age`, newborn cyan to deep amber, with
+  no white stop. Mass is currently unrendered. The ramp test asserts
+  `starAgeBucket` over the population, because a pixel check passed a ramp
+  broken to 100x its span.
+- **Batching.** Color and alpha are quantized, and discs batch into buckets,
+  turning ~10k draws into a few hundred. Alpha steps on a sqrt curve so faint
+  glows keep distinct rungs. Only rare giants earn per-star spikes.
+- **Transients.** Supernova fronts grow as `E^0.2 t^0.4`, shimmer is a GPU
+  self-blit, gamma-ray jets use a stable hash axis, and quasars share the
+  physics pulse and axis.
+- **Fades.** Stars fade 0.88 to 1.32 of the disk radius, gas to zero at 0.94,
+  hiding the confinement ridge (see [integrator.md](integrator.md)). A gentle
+  screen vignette runs after the lens.
+- **Lens.** `r_src = r - thetaE^2 / r`, drawn as concentric clipped self-blits
+  on the GPU. The region is cleared first and the snapshot re-laid, or it reads
+  as a dark box or a double-blended square.
 
-A `?seed=`-derived backdrop (starfield, faint nebulosity from the same gas
-sprites, galactic-plane band) blits as the screen-fixed opaque base. The world
-renders in a deterministic stellar co-rotating frame, so faster gas sweeps
-through star-forming regions and leaves newborn stars behind instead of
-appearing to fire them outward.
+Detail, verbatim:
 
-New stars begin dimly beneath both gas passes and ease into the exposed layer
-with age. Association glow follows the same reveal.
-
-Pan and zoom is a dev utility behind `?debug=1` (`data-cam-{tx,ty,zoom}`).
-Without it the view is locked.
-
-## Layers
-
-Nebular gas sprites at fractional physical positions in four tiers (cold
-blue-violet, warm magenta, H-alpha pink, shock-swept [OIII] teal), split into
-under- and over-star passes. Then multiply-composited dust lanes, bound
-association glows, stellar-class points, cyan compact remnants, a diffuse
-phase-mixed stellar halo, and transients for supernova and planetary-nebula
-shells and gamma-ray jets. Active quasars add bipolar light cones,
-pulse-synchronized packets, and nuclear glare on their gas-feedback axis.
-
-## Hiding the boundary
-
-Two radial fades hide the finite domain, because gas and stars end differently.
-
-Stars keep the wide fade (0.88 to 1.32 of the disk radius), matching their
-genuine two-tier soft halo in the physics. Gas fades to zero at 0.94, inside the
-confinement radius. Gas is sprung at the disk radius, which makes that radius an
-equilibrium every outward-drifting parcel parks on, and under the star fade that
-density ridge drew at 0.82 alpha. That was the brightest ring in the frame,
-sitting exactly on the domain boundary.
-
-A screen-space vignette then keeps a wide or short viewport from ending the
-image on a straight edge.
-
-## Post-processing and cost
-
-A gravitational-lens post-process adds point-mass deflection, Einstein-ring
-arclets, an inverted inner image, event-horizon shadow, and photon ring.
-
-Gas composites per screen-space block rather than per cell, which decouples
-frame cost, and gas exposure, from grid resolution.
-
-## See also
-
-- [rendering-fades.md](rendering-fades.md) - fades, vignette, and the lens.
-- [rendering-gas.md](rendering-gas.md) - gas sprites, screen-space blocks, dust.
-- [rendering-stars.md](rendering-stars.md) - star batching, glow, transients.
-- [FEATURES.md](FEATURES.md) - the inventory entry this expands.
-- [starfield.md](starfield.md) - the seeded backdrop.
-- [co-rotating-frame.md](co-rotating-frame.md) - the reference frame.
-- [perf-rewrite.md](journal/perf-rewrite.md) - the inner-loop rewrite.
+- [rendering](../.agents/skills/coding-galaxy-gen-internals/references/rendering.md)
+- [rendering-fades](../.agents/skills/coding-galaxy-gen-internals/references/rendering-fades.md)
+- [rendering-gas](../.agents/skills/coding-galaxy-gen-internals/references/rendering-gas.md)
+- [rendering-stars](../.agents/skills/coding-galaxy-gen-internals/references/rendering-stars.md)

@@ -674,7 +674,7 @@ test.describe("Galaxy Generator", () => {
 
   test("the age ramp spans the measured population rather than collapsing", async ({ page }) => {
     // A ramp scaled to the wrong span still paints every star, just all one
-    // color. Why this asserts the ramp, not pixels: docs/rendering-stars.md.
+    // color. Why this asserts the ramp, not pixels: docs/rendering.md.
     await page.goto("/");
     await waitForWasm(page);
 

@@ -1,39 +1,34 @@
-# Galaxy simulation internals
+# Galaxy simulation internals and the tick worker
 
-Cell grid with Newtonian gravity, in-place tick.
+Cell grid with Newtonian gravity and an in-place tick, run off the main thread
+by a Web Worker that owns its own WASM `Galaxy`.
 
-## Layout
+- **Layout.** Struct-of-arrays (parallel `Vec<f32>` and `Vec<u16>`) so the inner
+  loop auto-vectorizes. Acceleration accumulates in cartesian, since the old
+  polar form spent four trig calls per pair.
+- **Hot path.** `gravitate_all()` is a symmetric O(N squared / 2) pair sweep
+  that skips empty cells. `apply_acceleration()` integrates, reassigns cells,
+  and coalesces mass through a `Vec<u32>` rather than a `HashMap`. `tick`
+  returns a new `Galaxy` but reuses scratch buffers internally.
+- **Buffers.** Persistent `vel_x` and `vel_y`, or motion restarts from rest each
+  tick. `frac_x` and `frac_y` keep sub-grid offsets so clouds move smoothly.
+  Integer `xs_i` and `ys_i` index a precomputed `inv_r3` table by r squared, so
+  the hot loop has no `sqrt`.
+- **Worker in.** `init` hydrates from transferred state, `start` loops at up to
+  20 ticks/s, `setTimeModifier` updates dt live, `stop` halts and replies.
+- **Worker out.** `snapshot` carries gas mass, offsets, metallicity, star render
+  packing, transients, the radiation field, and counters, with typed arrays
+  transferred. `stopped` returns the opaque buffers for a byte-exact
+  round-trip, guarded by a unit test.
+- **Flat layouts are a serialization contract.** Stars are 15 f32 per star,
+  star render packing is 7 f32, and events are a u32 header plus 12 u32 per
+  pending event. Changing field order breaks the round-trip test. Integer ids
+  survive f32 because live ids stay far below 2^24.
 
-Struct-of-arrays (parallel `Vec<f32>` / `Vec<u16>`) so the physics inner loop is a tight numeric kernel the optimizer can auto-vectorize. Acceleration accumulates in cartesian (ax, ay). The old polar representation required four trig calls per pair, which dominated tick cost.
+Related: [sim-constants.md](sim-constants.md),
+[processes-events.md](processes-events.md), [integrator.md](integrator.md).
 
-## Hot path
+Detail, verbatim, with every field order:
 
-`tick()` runs two passes:
-
-- `gravitate_all()`. O(N squared / 2) pair sweep, symmetric per Newton's third law. Skips mass=0 on either side.
-- `apply_acceleration()`. Integrate one step, reassign cells to destination grid indices, accumulate mass on collision. Uses a `Vec<u32>` (size N squared) instead of a `HashMap` to coalesce masses.
-
-`tick` returns a new `Galaxy` to preserve the JS API, but internally reuses scratch buffers and moves the resulting arrays.
-
-## Buffers
-
-- `vel_x`, `vel_y`. Persistent per-cell velocity. Without persistence the sim restarts from rest each tick and produces imperceptible motion.
-- `frac_x`, `frac_y`. Sub-grid fractional offsets so a cell accumulates toward its next grid cell across ticks rather than snapping. Worker snapshots carry them to the canvas renderer, so visible clouds move continuously between integer cell transfers.
-- `xs_i`, `ys_i`. Integer cell positions. Integer diffs let us index an inv-r-cubed lookup with r squared, no `sqrt` in the hot loop.
-- `inv_r3`. Precomputed `g * (r squared + soft) ^ (-3/2)` indexed by integer r squared. Populated in `new()`, reused across seeds and ticks.
-- `scratch_mass`. Reused across ticks.
-
-## The rest of the model
-
-- [sim-constants.md](sim-constants.md) - every tuned constant and what it holds up.
-- [scenarios.md](scenarios.md) - the four `start => end-shape` pairs and their seeders.
-- [gas-forces.md](gas-forces.md) - fountain, ring wave, spiral wave.
-- [stellar-model.md](stellar-model.md) - star storage, births, associations, the spheroid.
-- [black-hole.md](black-hole.md) - accretion, quasar episodes, evaporation.
-- [processes-events.md](processes-events.md) - the scheduler and the event queue.
-- [integrator.md](integrator.md) - the gas integrator's four load-bearing decisions.
-- [seeding.md](seeding.md) - how an initial condition is built.
-- [stellar-population.md](stellar-population.md) - the IMF and the resolved-luminosity floor.
-- [stellar-heating.md](stellar-heating.md) - birth orbits and rotational support.
-- [star-metrics.md](star-metrics.md) - which star metrics to trust.
-- [boundary-ridge.md](boundary-ridge.md) - gas confinement and the star halo.
+- [galaxy-rust](../.agents/skills/coding-galaxy-gen-internals/references/galaxy-rust.md)
+- [tick-worker](../.agents/skills/coding-galaxy-gen-internals/references/tick-worker.md)

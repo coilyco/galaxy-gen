@@ -138,7 +138,7 @@ impl Stars {
     }
 
     /// Renderer packing, one-way out of the sim.
-    /// Field order: docs/tick-worker.md.
+    /// Field order: docs/galaxy-rust.md.
     pub fn render_data(&self) -> Vec<f32> {
         let n = self.len();
         let mut out = Vec::with_capacity(n * RENDER_FLOATS);
@@ -155,7 +155,7 @@ impl Stars {
     }
 
     /// Full flat serialization for the worker state round-trip.
-    /// Field order and the id-in-f32 argument: docs/tick-worker.md.
+    /// Field order and the id-in-f32 argument: docs/galaxy-rust.md.
     pub fn to_flat(&self) -> Vec<f32> {
         let n = self.len();
         let mut out = Vec::with_capacity(n * STAR_FLOATS);

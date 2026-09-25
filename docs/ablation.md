@@ -1,79 +1,36 @@
 # Ablation harness
 
-A way to ask which force is responsible for something, by switching one
-candidate off and re-running, instead of tuning a constant and hoping the
-result is attributable.
-
-Run the matrix:
+Ask which force is responsible for something by switching one candidate off
+and re-running, instead of tuning a constant and hoping the result is
+attributable.
 
 ```bash
 just ablation-sweep                       # 2500 ticks, size 500, 2 seeds
 just ablation-sweep 5000 500 3 12345 2    # ticks size seeds start-seed scenario
-```
-
-Or set a switch on a single `debug-sim` run:
-
-```bash
 GALAXY_ABL_AXISYMMETRIC_FIELD=1 just debug-sim 2500 500 2 12345 2
 ```
 
-The switches are listed in [ablation-switches.md](ablation-switches.md). The
-wasm build reads no environment and always runs the shipped physics, and the
-golden mass field test proves a default native build does too. `debug-sim`
-prints the resolved configuration as its first line, so a captured run always
-records the physics that produced it.
+- **Switches live in the kernel.** Editing a constant per run let a probe drift
+  from the call site on galaxy-gen#66. A switch the kernel reads cannot. The
+  wasm build reads no environment and always runs shipped physics, and
+  `debug-sim` prints the resolved configuration as its first line.
+- **Thirteen `GALAXY_ABL_*` switches** cover field cadence, smoothing,
+  axisymmetry, star self-gravity, association binding, birth dispersion, the
+  birth orbit ratio cap, star wave coupling, collapse radiation resistance,
+  length reference size, and the resolved luminosity floor.
+- **Reading results.** `vsig` is `v_rot / sigma` over the resolved disk, above
+  ~1.5 a rotating disk and below ~0.7 a mush. Prefer the cohort numbers
+  (`vsy`, `vsm`, `vso`) when asking whether something heats stars.
+- **What it found.** No single factor holds the disk. A birth orbit ratio cap
+  plus an axisymmetric field together hold `vsig` at 2.2-2.4 at t=2500, against
+  0.3-0.5 baseline, because there are two independent heat sources. Stars are
+  heated by structure that changes under them, not by structure that rotates
+  with them. The fix is in [stellar-heating.md](stellar-heating.md).
+- **A result at one domain size is a hypothesis at another.** Several length
+  scales are absolute cell counts, so compare same size and tick count.
 
-## Why the switches live in the kernel
+Detail, verbatim:
 
-The alternative is editing a constant per run. galaxy-gen#66 did that and had
-to retract a conclusion, because a constant was reverted in the probe but not
-at the call site and the probe was believed. A switch the kernel itself reads
-cannot drift from what ran. Any probe that mirrors a switch has to read the
-same switch - `Galaxy::birth_circular_ratio` does, for exactly that reason.
-
-## Reading the results
-
-`vsig` is `v_rot / sigma` over the resolved disk: above ~1.5 is a rotating
-disk, below ~0.7 a pressure-supported mush. `vsy` / `vsm` / `vso` are the
-same ratio for young, middle-aged, and old stars.
-
-Prefer the cohort numbers when the question is whether something is *heating*
-stars. Pooled `vsig` reports post-birth heating and a generational offset in
-birth orbits identically, and only the cohorts tell them apart. Both metrics
-carry calibration tests against populations whose answer is known by
-construction; so do the two field filters, because a miscalibrated ablation
-tool is just a faster way to reach a wrong conclusion.
-
-## What it found
-
-Single-factor ablation found nothing: not field staleness, clumpiness,
-non-axisymmetric structure, stellar self-gravity, association binding, or
-birth dispersion. Each on its own left the disk crossing into spheroid
-territory on the same schedule.
-
-Two factors together hold it indefinitely - a birth orbit ratio cap plus an
-axisymmetric field, `vsig` 2.2-2.4 at t=2500 against 0.3-0.5 for baseline.
-Neither works alone, because there are two independent heat sources and
-either is sufficient on its own: an over-fast birth becomes permanent
-eccentricity in a torque-free potential, and a correct birth is scattered
-apart by a lumpy one. One-at-a-time ablation cannot find that pair, which is
-worth remembering the next time a sweep comes back empty.
-
-Two follow-ups narrowed the second source. Box smoothing does not substitute
-for axisymmetrization - twenty passes is a Gaussian of about 11% of the disk
-radius, which erases cell texture and barely touches an arm, and it saturates
-around 0.5. So the heating is the large-scale transient mass distribution,
-not grid noise. Meanwhile the analytic density wave does not heat at all,
-even at 0.70 coupling. The difference is coherence, not amplitude: stars are
-heated by structure that changes under them, not by structure that rotates
-with them.
-
-One caution the sweep earned the hard way: **a result at one domain size is a
-hypothesis at another.** Several of the sim's length scales are absolute cell
-counts rather than fractions of the disk radius, so size 150 is a different
-physical setup from size 500 and not a smaller picture of it. Compare like with
-like - same size, same tick count - or the age effect and the size effect will
-be indistinguishable.
-
-The fix that came out of this is in [stellar-heating.md](stellar-heating.md).
-Full numbers on galaxy-gen#70, which compiles #65 and #66.
+- [ablation](../.agents/skills/coding-galaxy-gen-internals/references/ablation.md)
+- [ablation-switches](../.agents/skills/coding-galaxy-gen-internals/references/ablation-switches.md) - the full switch table
+- [ablation-rationale](../.agents/skills/coding-galaxy-gen-internals/references/ablation-rationale.md) - why each switch exists

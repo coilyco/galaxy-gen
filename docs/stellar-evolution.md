@@ -1,45 +1,31 @@
-# Low-mass stellar evolution
+# Stellar evolution and chemical enrichment
 
-Galaxy Gen now models two deterministic post-main-sequence channels. The
-existing massive-star path ends in core collapse, neutron stars, compact
-mergers, and short gamma-ray bursts. Lower-mass stars instead expand into red
-giants, shed planetary nebulae, and leave white dwarfs.
+Two deterministic post-main-sequence channels, plus a heavy-element ledger that
+rides along with every baryonic carrier.
 
-## Quiet channel
+- **Massive channel.** Core collapse leaves neutron stars. Compact binary
+  partners merge and emit a short gamma-ray burst.
+- **Quiet channel.** A lower-mass star becomes a red giant, emits a
+  `PlanetaryNebula` returning most of its envelope to nearby gas, and leaves a
+  white dwarf that eventually phase-mixes into the diffuse halo.
+- **Delayed thermonuclear channel.** Intermediate-mass draws split into close
+  binaries. Once both white dwarfs pass a seed-derived delay, a
+  `TypeIaSupernova` disrupts them, returns their mass, emits a linked shock,
+  and converts up to 35% of the binary mass into heavy elements.
+- **Metal carriers.** Every gas cell, resolved star, hot halo, diffuse halo,
+  black hole, radiated sink, and pending `StarBirth` carries heavy-element mass.
+  Every transfer keeps the source metallicity.
+- **Production.** Core collapse synthesizes 2% of progenitor mass, Type Ia up
+  to 35%, recorded in `metal_produced_total`. Tests enforce tracked metals =
+  seeded + produced, and 0 <= carrier metals <= carrier mass.
+- **Presentation.** Red giants render large and warm, white dwarfs compact and
+  blue-white, planetary nebulae as slow cyan and pink shells, Type Ia as a
+  bright blue-white front. Dust lanes need enough metals, and [OIII] emission
+  scales with local abundance.
+- **State.** Every stage, binary id, delay, counter, and composition array
+  survives the worker round-trip.
 
-When a lower-mass main-sequence star reaches its mass-derived lifetime:
+Detail, verbatim:
 
-1. It becomes a red giant for a short resolved phase.
-2. It emits a PlanetaryNebula event and returns most of its envelope to nearby
-   gas with a gentle outward velocity.
-3. The remaining mass and inherited heavy elements stay in a white dwarf.
-4. An unpaired white dwarf eventually phase-mixes into the diffuse stellar
-   halo.
-
-Envelope loss moves inherited composition without creating baryonic mass or
-new heavy elements.
-
-## Delayed thermonuclear channel
-
-Intermediate-mass birth draws split into close binaries using the same stable
-binary ids as compact neutron-star pairs. Both components follow the quiet
-channel. Once both white dwarfs reach a seed-derived delay, stellar aging emits
-a TypeIaSupernova event.
-
-The event disrupts both white dwarfs, returns their mass to local gas, emits a
-causally linked shock wave, and converts up to 35% of the binary mass into new
-heavy elements. Capacity-limited or fractional ejecta enter the serialized
-radiated sink, keeping both ledgers closed.
-
-## Presentation
-
-Red giants render as large warm points. White dwarfs render as compact
-blue-white points. Planetary nebulae form slowly expanding cyan and pink
-shells, while Type Ia events use a brighter blue-white blast front distinct
-from warm core-collapse shells.
-
-The compact UI reports total supernovae and planetary nebulae. Debug mode
-breaks that summary into live red-giant, white-dwarf, and neutron-star
-populations plus separate core-collapse, Type Ia, and compact-merger counters.
-Every event, stage, binary id, age, delay, and counter survives the existing
-worker state round-trip.
+- [stellar-evolution](../.agents/skills/coding-galaxy-gen-internals/references/stellar-evolution.md)
+- [chemical-enrichment](../.agents/skills/coding-galaxy-gen-internals/references/chemical-enrichment.md)

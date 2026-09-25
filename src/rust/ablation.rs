@@ -24,7 +24,7 @@
 //! switches below cover both live paths and the birth velocities that set
 //! the population's initial dispersion.
 //!
-//! Per-switch reasoning lives in docs/ablation-rationale.md.
+//! Per-switch reasoning lives in docs/ablation.md.
 
 use std::sync::OnceLock;
 
