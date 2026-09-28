@@ -30,6 +30,7 @@
     "@babel/preset-react": "^7.28.5",
     "@babel/preset-typescript": "^7.28.5",
     "@playwright/test": "^1.59.1",
+    "@sentry/react": "10.75.3",
     "@tailwindcss/postcss": "^4.2.3",
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",

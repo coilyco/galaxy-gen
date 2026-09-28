@@ -21,7 +21,9 @@ COPY webpack.config.js postcss.config.js tsconfig.json ./
 RUN npm ci
 RUN npm install ./pkg --no-save
 
-RUN npm run build
+# The browser DSN is public by design, but it stays out of tracked files.
+ARG SENTRY_DSN=""
+RUN SENTRY_DSN="$SENTRY_DSN" npm run build
 
 # Stage 2: unprivileged nginx serving the built bundle.
 FROM nginxinc/nginx-unprivileged:1.27-alpine AS runtime

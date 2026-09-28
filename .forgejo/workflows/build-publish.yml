@@ -38,4 +38,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Publish immutable galaxy-gen image
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: bash scripts/publish-image.sh

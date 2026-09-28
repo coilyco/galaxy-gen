@@ -31,7 +31,9 @@ printf '%s' "${REGISTRY_TOKEN}" \
   | docker login "${registry}" --username coilyco-ops --password-stdin
 
 echo "==> building ${image}"
-docker build --pull --platform linux/amd64 -t "${image}" .
+docker build --pull --platform linux/amd64 \
+  --build-arg SENTRY_DSN="${SENTRY_DSN:-}" \
+  -t "${image}" .
 
 echo "==> publishing ${image}"
 docker push "${image}"

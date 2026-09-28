@@ -1,4 +1,5 @@
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const { DefinePlugin } = require("webpack");
 const path = require("path");
 
 module.exports = {
@@ -30,11 +31,9 @@ module.exports = {
     ],
   },
   plugins: [
+    new DefinePlugin({ "process.env.SENTRY_DSN": JSON.stringify(process.env.SENTRY_DSN || "") }),
     new CopyWebpackPlugin({
-      patterns: [
-        { from: "src/js/index.html" },
-        { from: "src/js/favicon.svg" },
-      ],
+      patterns: [{ from: "src/js/index.html" }, { from: "src/js/favicon.svg" }],
     }),
   ],
   mode: "development",
