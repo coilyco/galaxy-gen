@@ -23,14 +23,12 @@ jobs:
       - run: bash scripts/ci-command.sh just lint-rust
       - run: bash scripts/ci-command.sh just test-rust
       - run: bash scripts/ci-command.sh just check-js
-      - name: Alert Telegram on main failure
+      - name: Alert Sentry on main failure
         if: ${{ failure() && github.ref == 'refs/heads/main' }}
         continue-on-error: true
         env:
-          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
-        run: python3 scripts/alert-telegram.py
-
+          SENTRY_DSN: ${{ secrets.SENTRY_CI_DSN }}
+        run: python3 scripts/alert_sentry.py
   publish:
     needs: test
     runs-on: deploy

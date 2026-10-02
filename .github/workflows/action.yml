@@ -27,13 +27,6 @@ jobs:
       - name: Install binaryen (pinned release)
         run: bash scripts/ci/install-binaryen.sh
       - run: wasm-pack build
-      - name: Alert Telegram on main failure
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
-        continue-on-error: true
-        env:
-          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
-        run: python3 scripts/alert-telegram.py
   js:
     runs-on: ubuntu-latest
     steps:
@@ -52,14 +45,6 @@ jobs:
       # js
       - run: npm ci
       - run: npm run build
-
-      - name: Alert Telegram on main failure
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
-        continue-on-error: true
-        env:
-          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
-        run: python3 scripts/alert-telegram.py
   e2e:
     runs-on: ubuntu-latest
     needs: [rust, js]
@@ -90,10 +75,3 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
-      - name: Alert Telegram on main failure
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
-        continue-on-error: true
-        env:
-          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.TELEGRAM_RED_CHAT_ID }}
-        run: python3 scripts/alert-telegram.py
