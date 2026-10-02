@@ -5,6 +5,33 @@ build_wasm() {
   wasm-pack build
 }
 
+# wasm-pack fetches the wasm-bindgen CLI with no timeout and stalls (galaxy-gen#89), so
+# get the pinned one here, bounded. wasm-pack uses a matching one on PATH.
+prefetch_wasm_bindgen() {
+  local version target dir
+  version=$(awk '/^name = "wasm-bindgen"$/ {getline; gsub(/[^0-9.]/, ""); print; exit}' Cargo.lock)
+  if [ -z "$version" ] || [ "$(uname -s)" != "Linux" ]; then
+    return 0
+  fi
+  if wasm-bindgen --version 2>/dev/null | grep -q " ${version}$"; then
+    return 0
+  fi
+  case "$(uname -m)" in
+    x86_64) target=x86_64-unknown-linux-musl ;;
+    aarch64 | arm64) target=aarch64-unknown-linux-gnu ;;
+    *) return 0 ;;
+  esac
+  dir=$(mktemp -d)
+  if ! curl --retry 3 --retry-all-errors --retry-delay 3 --connect-timeout 10 --max-time 60 -fsSL \
+    -o "$dir/wasm-bindgen.tar.gz" \
+    "https://github.com/rustwasm/wasm-bindgen/releases/download/${version}/wasm-bindgen-${version}-${target}.tar.gz" ||
+    ! tar -xzf "$dir/wasm-bindgen.tar.gz" -C "$dir" --strip-components=1; then
+    echo "::error::could not fetch wasm-bindgen ${version}, which wasm-pack would stall on" >&2
+    exit 1
+  fi
+  export PATH="$dir:$PATH"
+}
+
 test_rust() {
   cargo check
   cargo test -- --color always
@@ -42,6 +69,7 @@ case "${1:-}" in
     # Lockfile-exact deps plus the wasm package, which check-js needs for the
     # galaxy_gen_backend types. CI installs no toolchain: dev-base supplies it.
     npm ci
+    prefetch_wasm_bindgen
     build_wasm
     npm install ./pkg --no-save
     ;;

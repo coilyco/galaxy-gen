@@ -16,7 +16,7 @@ jobs:
     container: forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release
     steps:
       - uses: actions/checkout@v6
-      - run: just ci-setup
-      - run: just lint-rust
-      - run: just test-rust
-      - run: just check-js
+      - run: bash scripts/ci-command.sh just ci-setup
+      - run: bash scripts/ci-command.sh just lint-rust
+      - run: bash scripts/ci-command.sh just test-rust
+      - run: bash scripts/ci-command.sh just check-js
