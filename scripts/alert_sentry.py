@@ -53,10 +53,12 @@ def run_url() -> str:
         return explicit
     base = os.environ.get("FORGE_URL", "").strip() or DEFAULT_FORGE_URL
     repo = os.environ.get("REPO", "") or os.environ.get("GITHUB_REPOSITORY", "")
-    run_id = os.environ.get("GITHUB_RUN_ID", "")
-    if not (repo and run_id):
+    # The web URL takes the per-repo run index. GITHUB_RUN_ID is the forge's global
+    # row id, so a link built from it opens the wrong run or none.
+    run_number = os.environ.get("GITHUB_RUN_NUMBER", "")
+    if not (repo and run_number):
         return "?"
-    return f"{base.rstrip('/')}/{repo}/actions/runs/{run_id}"
+    return f"{base.rstrip('/')}/{repo}/actions/runs/{run_number}"
 
 
 def parse_dsn(dsn: str) -> str:
