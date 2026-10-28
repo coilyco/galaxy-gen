@@ -27,8 +27,8 @@ repos:
         stages: [pre-commit, pre-push]
 
   # BEGIN managed by agentic-os/scripts/apply-agentic-os-hooks.py
-  - repo: https://forgejo.coilysiren.me/coilyco/agentic-os
-    rev: aos-precommit-v0.104.0
+  - repo: https://github.com/coilyco/agentic-os
+    rev: aos-precommit-v0.124.0
     hooks:
       - id: catalog-trifecta
       - id: documentation-placement

@@ -170,5 +170,6 @@ The fleet runs one lane, and it authorizes the agent end to end. Pushing straigh
 * **ALWAYS open the pull request** in the same turn as the branch's first push, on every lane except `remote-branch-only`. A pushed branch with no pull request is litter nobody reviews.
 * **NEVER `--no-verify`** and **NEVER force-push**. Those two are the real walls, and they stay closed.
 * **ALWAYS merge your own pull request on `pull-request-and-merge`**, in the same turn, as soon as it is green. Reporting it as open and awaiting someone is the failure this lane exists to prevent.
+* **A merge refused with 405 "the head branch is behind the base branch" is yours to fix, never a reason to ask.** Update the branch yourself, with `aosguard ops forgejo pr update <owner> <repo> <index>`, the forgejo `update_pull-request` verb, or by merging `origin/main` into it and pushing, never by force. Wait for green, then merge.
 * **NEVER merge on `pull-request` or `remote-branch-only`.** Those two stop where they stop, and the director merge lane carries a `pull-request` from there.
 <!-- END managed by agentic-os/scripts/apply-git-workflow.py -->
