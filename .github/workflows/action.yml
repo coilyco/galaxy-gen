@@ -23,7 +23,7 @@ jobs:
       - run: cargo test
 
       # wasm
-      - run: cargo install wasm-pack
+      - run: bash scripts/ci/install-wasm-pack.sh
       - name: Install binaryen (pinned release)
         run: bash scripts/ci/install-binaryen.sh
       - run: wasm-pack build
@@ -37,7 +37,7 @@ jobs:
           cache: 'npm'
 
       # wasm
-      - run: cargo install wasm-pack
+      - run: bash scripts/ci/install-wasm-pack.sh
       - name: Install binaryen (pinned release)
         run: bash scripts/ci/install-binaryen.sh
       - run: wasm-pack build
@@ -55,7 +55,7 @@ jobs:
           node-version: 'lts/*'
           cache: 'npm'
 
-      - run: cargo install wasm-pack
+      - run: bash scripts/ci/install-wasm-pack.sh
       - name: Install binaryen (pinned release)
         run: bash scripts/ci/install-binaryen.sh
       - run: wasm-pack build
