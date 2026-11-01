@@ -106,7 +106,7 @@ test-e2e-ui *ARGS:
 build-docker *ARGS:
     @bash scripts/ward-command.sh build-docker "$@"
 
-# Parse the trusted Forgejo OCI publisher shell contract.
+# Parse the trusted GHCR publisher shell contract.
 image-publish-check *ARGS:
     @bash -n scripts/publish-image.sh "$@"
 

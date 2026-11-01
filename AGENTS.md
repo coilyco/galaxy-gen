@@ -69,12 +69,11 @@ scope adds. `docs/performance.md` is load-bearing for the inner loop.
 
 ## CI
 
-GitHub Actions (`.github/workflows/action.yml`) runs `rust`, `js`, and `e2e` on PRs
-to `main`. Each job installs its own toolchain on `ubuntu-latest`, with a pinned
-binaryen from `scripts/ci/install-binaryen.sh`. The Forgejo gate that ran the
-same verbs inside the dev-base image (`.forgejo/workflows/ci.yml` on PRs,
-`build-publish.yml` on `main`) retired with Forgejo on 2026-11-01 (COI-2931), so
-the gate and the shipped artifact no longer share one toolchain.
+GitHub Actions on `ubuntu-latest` (public repo, never the kai-server runner, COI-3096):
+`.github/workflows/action.yml` runs `rust`, `js`, and `e2e` on PRs to `main`, and
+`ci.yml` runs the `just` verbs (`ci-setup`, `lint-rust`, `test-rust`, `check-js`) on
+PRs and as the `test` job of `build-publish.yml` on `main`. Each job installs its own
+toolchain, with a pinned binaryen from `scripts/ci/install-binaryen.sh`.
 
 ## Workflow
 
@@ -90,12 +89,10 @@ Auto-rolling from an upstream push here still needs cross-repo dispatch
 
 ## Deploy
 
-The Forgejo source CI that built and published the private image
-`forgejo.coilysiren.me/coilyco-gaming/galaxy-gen:<full-source-sha>`, with its
-`workflow_dispatch` retry route, retired with Forgejo on 2026-11-01 (COI-2931,
-COI-2953). No GitHub workflow publishes an image yet. The Dockerfile builder
-stage still names a `forgejo.coilysiren.me` base image, so `docker build` cannot
-pull it until COI-2953 lands.
+`build-publish.yml` tests, then pushes `ghcr.io/coilyco/galaxy-gen:<full-source-sha>` on
+every push to `main`, with a `workflow_dispatch` retry route (COI-3102). It holds no
+cluster credentials. The Dockerfile builder stage is the official Rust image with Node
+copied in and the pinned wasm-pack release, replacing the retired dev-base image.
 
 The deploy surface remains in
 [coilyco/deploy](https://github.com/coilyco/deploy) under

@@ -1,0 +1,48 @@
+# Tests, then builds the image and pushes it to GHCR on every push to main. Rollout stays
+# in coilyco/deploy, and this public repo holds no cluster credentials (COI-3096).
+name: build-publish
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-publish
+  cancel-in-progress: false
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Publish immutable galaxy-gen image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        run: bash scripts/publish-image.sh
+
+      - name: Alert Sentry on main failure
+        if: ${{ failure() }}
+        continue-on-error: true
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_CI_DSN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 scripts/alert_sentry.py

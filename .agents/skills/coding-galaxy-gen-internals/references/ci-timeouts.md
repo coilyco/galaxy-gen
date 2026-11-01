@@ -1,8 +1,9 @@
 # CI job timeouts
 
-Verbatim header formerly at the top of `.forgejo/workflows/build-publish.yml` and
-`.forgejo/workflows/ci.yml`, moved here when the code-comments hook capped
-file headers at two lines.
+Verbatim header formerly at the top of the Forgejo `build-publish.yml` and `ci.yml`
+(now `.github/workflows/ci.yml`), moved here when the code-comments hook capped
+file headers at two lines. The hosted job timeout is 20m, since it also installs
+wasm-pack (the pinned release, `scripts/ci/install-wasm-pack.sh`).
 
 ```text
 # `just ci-setup` runs `wasm-pack build`, and wasm-pack downloads the

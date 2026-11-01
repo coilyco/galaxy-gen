@@ -16,7 +16,6 @@ enabled = false
 # the two-line rule fits. See galaxy-gen#24.
 excludes = [
   "deploy/",
-  ".forgejo/",
   ".github/",
   ".agents/skills/categories.yaml",
   ".pre-commit-config.yaml",
