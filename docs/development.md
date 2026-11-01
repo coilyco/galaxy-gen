@@ -13,8 +13,8 @@
 - **Build.** `cargo build` and `cargo test`, `wasm-pack build`, webpack 5 with
   babel and `webpack-dev-server`. The justfile carries the multi-step flows.
 - **CI.** GitHub Actions (`.github/workflows/action.yml`) runs the Rust, JS, and
-  browser e2e gates on PRs. The Forgejo gate that ran the `just` verbs in the
-  dev-base image retired with Forgejo on 2026-11-01 (COI-2931). The `ci-setup`
+  browser e2e gates on PRs, and `ci.yml` runs the `just` verbs, also as the `test`
+  job of `build-publish.yml` on `main`. The `ci-setup`
   verb fetches the pinned wasm-bindgen CLI itself, since wasm-pack's download
   can hang (galaxy-gen#89, #8678).
 

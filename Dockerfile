@@ -1,7 +1,17 @@
 # syntax=docker/dockerfile:1.7
 
 # Stage 1: build Rust -> WASM -> JS static bundle
-FROM forgejo.coilysiren.me/coilyco-flight-deck/agentic-os:release AS builder
+# The retired dev-base image is replaced by the official Rust image at the rust-toolchain.toml
+# pin, with Node copied from the official Node image and the pinned wasm-pack release.
+FROM rust:1.90-bookworm AS builder
+
+COPY --from=node:22-bookworm-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:22-bookworm-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
+    ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx && \
+    rustup target add wasm32-unknown-unknown
+COPY scripts/ci/install-wasm-pack.sh /tmp/install-wasm-pack.sh
+RUN bash /tmp/install-wasm-pack.sh
 
 WORKDIR /app
 

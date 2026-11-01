@@ -77,9 +77,8 @@ Deployed to [galaxy-gen.coilysiren.me](https://galaxy-gen.coilysiren.me).
 The deploy surface lives in the deploy monorepo
 ([coilyco/deploy](https://github.com/coilyco/deploy),
 `services/galaxy-gen/`), which serves the source-owned image with unprivileged
-nginx on k3s. The Forgejo CI that published the private image
-`forgejo.coilysiren.me/coilyco-gaming/galaxy-gen:<full-source-sha>` retired with
-Forgejo on 2026-11-01 (COI-2953), and no GitHub workflow publishes an image yet.
+nginx on k3s. The `build-publish` workflow pushes
+`ghcr.io/coilyco/galaxy-gen:<full-source-sha>` on every push to `main` (COI-3102).
 The deploy repo owns the chart, rollout, and public ingress.
 
 Validate the local image and publisher through Ward:

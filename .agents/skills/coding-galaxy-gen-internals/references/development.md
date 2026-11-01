@@ -33,7 +33,7 @@ The Galaxy is immutable-style — methods like `seed()`, `tick()` return new Gal
 ### CI
 
 - GitHub Actions (`.github/workflows/action.yml`): `rust`, `js`, and browser `e2e` on PRs, each installing its own toolchain.
-- Forgejo (`.forgejo/workflows/ci.yml` on PRs, `build-publish.yml` on `main`) ran the Rust and JS gates in the dev-base image and retired with Forgejo on 2026-11-01 (COI-2931).
+- GitHub Actions (`.github/workflows/ci.yml` on PRs, and as the `test` job of `build-publish.yml` on `main`) runs the `just` verbs for the Rust and JS gates.
 
 ## Commands
 

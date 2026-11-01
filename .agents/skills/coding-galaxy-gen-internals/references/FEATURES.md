@@ -69,10 +69,9 @@ deterministic event queue, and per-(process, tick) RNG streams from the
   the stellar-disk metrics. The browser build always runs the shipped physics.
   See [ablation.md](ablation.md).
 - Playwright E2E plus `perf-profile` and `test-perf` GPU specs.
-- Served on k3s at `galaxy-gen.coilysiren.me` by unprivileged nginx. Forgejo CI
-  tested the Rust core and published a sha-tagged image the deploy repo pulled
-  read-only. That retired with Forgejo on 2026-11-01 (COI-2953), and no GitHub
-  workflow publishes an image yet.
+- Served on k3s at `galaxy-gen.coilysiren.me` by unprivileged nginx. GitHub Actions
+  tests the Rust core and pushes a sha-tagged image to `ghcr.io/coilyco/galaxy-gen`
+  that the deploy repo pulls (COI-3102).
 
 ## See also
 

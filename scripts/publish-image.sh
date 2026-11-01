@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-registry="forgejo.coilysiren.me"
+registry="ghcr.io"
 image_name="coilyco/galaxy-gen"
 
-if [ -z "${REGISTRY_TOKEN:-}" ]; then
-  echo "REGISTRY_TOKEN is required for the trusted image-publish lane." >&2
+if [ -z "${GITHUB_TOKEN:-}" ]; then
+  echo "GITHUB_TOKEN is required for the trusted image-publish lane." >&2
   exit 1
 fi
 
@@ -27,12 +27,14 @@ trap 'rm -rf "${docker_config}"' EXIT
 chmod 700 "${docker_config}"
 export DOCKER_CONFIG="${docker_config}"
 
-printf '%s' "${REGISTRY_TOKEN}" \
-  | docker login "${registry}" --username coilyco-ops --password-stdin
+printf '%s' "${GITHUB_TOKEN}" \
+  | docker login "${registry}" --username "${GITHUB_ACTOR:-coilyco-ops}" --password-stdin
 
 echo "==> building ${image}"
+# The source label links the package to this repo, so GITHUB_TOKEN may push it.
 docker build --pull --platform linux/amd64 \
   --build-arg SENTRY_DSN="${SENTRY_DSN:-}" \
+  --label "org.opencontainers.image.source=https://github.com/coilyco/galaxy-gen" \
   -t "${image}" .
 
 echo "==> publishing ${image}"
