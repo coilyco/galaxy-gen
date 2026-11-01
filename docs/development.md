@@ -12,11 +12,11 @@
   `lib/styles.css` the Tailwind theme.
 - **Build.** `cargo build` and `cargo test`, `wasm-pack build`, webpack 5 with
   babel and `webpack-dev-server`. The justfile carries the multi-step flows.
-- **CI.** Forgejo runs the Rust and JS gates in the dev-base image through `just` verbs
-  (`ci.yml` on PRs, `build-publish.yml` on `main`), each behind `scripts/ci-command.sh`, which
-  routes fetches through the runner egress proxy. A 10m timeout bounds a stall, and `ci-setup`
-  fetches the pinned wasm-bindgen CLI itself, since wasm-pack's download can hang
-  (galaxy-gen#89, #8678). GitHub Actions keeps browser e2e (galaxy-gen#74).
+- **CI.** GitHub Actions (`.github/workflows/action.yml`) runs the Rust, JS, and
+  browser e2e gates on PRs. The Forgejo gate that ran the `just` verbs in the
+  dev-base image retired with Forgejo on 2026-11-01 (COI-2931). The `ci-setup`
+  verb fetches the pinned wasm-bindgen CLI itself, since wasm-pack's download
+  can hang (galaxy-gen#89, #8678).
 
 ```bash
 just install
