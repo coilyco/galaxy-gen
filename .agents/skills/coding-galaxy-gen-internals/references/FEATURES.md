@@ -70,8 +70,9 @@ deterministic event queue, and per-(process, tick) RNG streams from the
   See [ablation.md](ablation.md).
 - Playwright E2E plus `perf-profile` and `test-perf` GPU specs.
 - Served on k3s at `galaxy-gen.coilysiren.me` by unprivileged nginx. Forgejo CI
-  tests the Rust core, then the trusted deploy lane publishes a sha-tagged
-  image the deploy repo pulls read-only.
+  tested the Rust core and published a sha-tagged image the deploy repo pulled
+  read-only. That retired with Forgejo on 2026-11-01 (COI-2953), and no GitHub
+  workflow publishes an image yet.
 
 ## See also
 

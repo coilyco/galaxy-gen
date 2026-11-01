@@ -69,63 +69,38 @@ scope adds. `docs/performance.md` is load-bearing for the inner loop.
 
 ## CI
 
-The Rust and JS gates run on Forgejo inside the promoted dev-base image, the
-same image the publish job feeds into `docker build`, so the gate and the
-shipped artifact share one toolchain. Nothing in CI installs a toolchain: rust,
-node, wasm-pack, and a pinned binaryen all arrive with the image
-(agentic-os#986, the aos CI-in-dev-base convention).
-
-- `.forgejo/workflows/ci.yml` - `gate` on pull requests - `just ci-setup` / `lint-rust` / `test-rust` / `check-js`
-- `.forgejo/workflows/build-publish.yml` - `test` on push to `main` - the same four verbs, then the `publish` job
-
-GitHub Actions (`.github/workflows/action.yml`) still runs `rust`, `js`, and
-`e2e` on PRs to `main`. Only `e2e` is load-bearing now, and it is the one gate
-that does not share the shipping toolchain: it builds its own bundle with its
-own wasm-pack and binaryen because the in-cluster runner cannot reach the
-Playwright browser CDN. Retiring the duplicated `rust` and `js` jobs, and
-finding e2e a home on the shipping toolchain, are tracked in galaxy-gen#74.
+GitHub Actions (`.github/workflows/action.yml`) runs `rust`, `js`, and `e2e` on PRs
+to `main`. Each job installs its own toolchain on `ubuntu-latest`, with a pinned
+binaryen from `scripts/ci/install-binaryen.sh`. The Forgejo gate that ran the
+same verbs inside the dev-base image (`.forgejo/workflows/ci.yml` on PRs,
+`build-publish.yml` on `main`) retired with Forgejo on 2026-11-01 (COI-2931), so
+the gate and the shipped artifact no longer share one toolchain.
 
 ## Workflow
 
 The lane is `pull-request-and-merge`, stated in the Git workflow block below.
-A merge to `main` publishes the image, so the gate is the test suite rather
-than a review. Merge only with `just test-rust`, `just check-js`, and
-`just test-e2e` green, and never with `--no-verify`.
+The gate is the test suite rather than a review. Merge only with
+`just test-rust`, `just check-js`, and `just test-e2e` green, and never with
+`--no-verify`.
 
 It does not roll the public site. The deploy repo pins an exact source SHA and
-rolls only when its own `services/galaxy-gen/**` changes. Auto-rolling from an
-upstream push here still needs cross-repo dispatch (deploy#11), so a new image
-sits unused until that pin moves.
+rolls only when its own `services/galaxy-gen/**` changes.
+Auto-rolling from an upstream push here still needs cross-repo dispatch
+(deploy#11).
 
 ## Deploy
 
-Source CI owns the image build. A push to `main` first runs the Rust and JS
-test job, then the trusted `deploy` runner publishes the private image as
-`forgejo.coilysiren.me/coilyco-gaming/galaxy-gen:<full-source-sha>`. The runner
-supplies package write authority as `REGISTRY_TOKEN`, and the publisher proves
-the remote immutable manifest after its single-architecture push.
-
-`build-publish` also takes `workflow_dispatch`, which is the only retry when a
-run dies without publishing: this Forgejo serves no `actions/runs/{id}/rerun`
-route, so the alternative is an empty commit. A stalled runner is the case that
-earns it - a `wasm-pack` fetch hung for the full 30-minute job timeout on
-`ef78300`, and the skipped `publish` left `main` with no image for that SHA.
-
-The image build is a two-stage Dockerfile whose builder stage is that same
-dev-base image, so `docker build` needs a `forgejo.coilysiren.me` login before
-it can pull its own base. `scripts/publish-image.sh` already logs in first. A
-local `just build-docker` needs that login too, where the old public Rust
-base needed none.
-
-Browser e2e stays on GitHub PR CI because the in-cluster runner cannot reach
-the Playwright browser CDN. The tsc typecheck no longer does: `check-js` now
-runs on the Forgejo side with the rest of the gate.
+The Forgejo source CI that built and published the private image
+`forgejo.coilysiren.me/coilyco-gaming/galaxy-gen:<full-source-sha>`, with its
+`workflow_dispatch` retry route, retired with Forgejo on 2026-11-01 (COI-2931,
+COI-2953). No GitHub workflow publishes an image yet. The Dockerfile builder
+stage still names a `forgejo.coilysiren.me` base image, so `docker build` cannot
+pull it until COI-2953 lands.
 
 The deploy surface remains in
-[coilyco-bridge/deploy](https://forgejo.coilysiren.me/coilyco-bridge/deploy)
-under `services/galaxy-gen/`. That repo owns the chart, namespace, rollout,
-public ingress, and separate read-only `forgejo-registry` pull credential. It
-does not build this source. Never add deploy manifests back here.
+[coilyco/deploy](https://github.com/coilyco/deploy) under
+`services/galaxy-gen/`. That repo owns the chart, namespace, rollout, and public
+ingress. It does not build this source. Never add deploy manifests back here.
 
 ---
 
@@ -134,7 +109,7 @@ does not build this source. Never add deploy manifests back here.
 Route every dev command through the [`justfile`](justfile). Run verbs with `just <verb>`. The lockdown denies bare invocations of the underlying tools (`cargo`, `wasm-pack`, `npx`, etc.). Add new verbs to that file before invoking them.
 
 Run `just image-publish-check` and `just build-docker` when changing
-the Forgejo OCI publisher.
+the OCI publisher.
 
 ## Checkout residency
 
