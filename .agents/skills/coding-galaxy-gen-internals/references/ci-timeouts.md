@@ -16,3 +16,16 @@ wasm-pack (the pinned release, `scripts/ci/install-wasm-pack.sh`).
 #
 # This bounds the symptom. The download itself is galaxy-gen#89.
 ```
+
+## Node is pinned to 24, and the e2e job has a 20m timeout (COI-3445)
+
+`node-version: lts/*` floated. On 2026-11-01 it resolved to Node 24.22.1 and the
+e2e job's `npx playwright install --with-deps chromium` took seconds. By
+2026-11-04 it resolved to Node 26.13.0, and the same step, with the same
+Playwright 1.59.1, Chrome 147.0.7727.15 build 1217 and runner image
+(ubuntu-24.04 20261025.353.1), logged the Chrome download at 100% and then
+never returned. Runs 41898681002, 41926646635 and 41943787025 sat there until
+cancelled. A healthy e2e job finishes in about 8m, so 20m fails a stall fast.
+
+Pinning bounds the symptom on the version that worked. Moving to Node 26 is a
+deliberate change that has to show the Playwright install completing first.
