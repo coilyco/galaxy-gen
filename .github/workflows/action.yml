@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
+          node-version: 24
           cache: 'npm'
 
       # wasm
@@ -47,12 +47,14 @@ jobs:
       - run: npm run build
   e2e:
     runs-on: ubuntu-latest
+    # Why 24 and 20m: .agents/skills/coding-galaxy-gen-internals/references/ci-timeouts.md
+    timeout-minutes: 20
     needs: [rust, js]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
+          node-version: 24
           cache: 'npm'
 
       - run: bash scripts/ci/install-wasm-pack.sh
